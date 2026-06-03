@@ -32,6 +32,23 @@ def test_create_and_get_own_note(client, make_user):
     assert r.status_code == 200
     assert r.json()["content"] == "my first note"
 
+    # create a second note
+    r = client.post("/notes", json={"content": "my second note"}, headers=headers)
+    assert r.status_code == 201
+    note_id2 = r.json()["id"]
+
+    r = client.get(f"/notes/{note_id2}", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["content"] == "my second note"
+
+    # Update a note
+    r = client.put(f"/notes/{note_id2}", json={"content": "my 2nd note"}, headers=headers)
+    assert r.status_code == 200
+
+    r = client.get(f"/notes/{note_id2}", headers=headers)
+    assert r.status_code == 200
+    assert r.json()["content"] == "my 2nd note"
+
 
 def test_shared_note_is_readable_but_read_only(client, make_user):
     """A shared note can be read by the recipient, but updating it returns 403."""
@@ -57,6 +74,9 @@ def test_shared_note_is_readable_but_read_only(client, make_user):
     r = client.put(f"/notes/{note_id}", json={"content": "hacked"}, headers=recipient)
     assert r.status_code == 403
 
+    # ...or delete it
+    r = client.delete(f"/notes/{note_id}", headers=recipient)
+    assert r.status_code == 404
 
 def test_user_cannot_access_another_users_note(client, make_user):
     """REQUIRED: a user must not be able to read someone else's un-shared note.
