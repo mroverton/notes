@@ -119,33 +119,31 @@ most importantly — that **a user cannot access another user's note**.
 
 ```bash
 BASE=http://localhost:8000
+HCTX='Content-Type: application/json'
 
 # 1. Register
-curl -X POST $BASE/auth/register \
-  -H 'Content-Type: application/json' \
-  -d '{"username":"alice","password":"password123"}'
+curl -X POST $BASE/auth/register -H "$HCTX" -d '{"username":"alice","password":"password123"}'
+curl -X POST $BASE/auth/register -H "$HCTX" -d '{"username":"bob","password":"password123"}'
 
 # 2. Log in (form-encoded — OAuth2 password flow). Save the token.
-TOKEN=$(curl -s -X POST $BASE/auth/login \
-  -d 'username=alice&password=password123' | python3 -c 'import sys,json;print(json.load(sys.stdin)["access_token"])')
+TALICE=$(curl -s -X POST $BASE/auth/login -d 'username=alice&password=password123' | jq -r '.access_token')
+TBOB=$(curl -s -X POST $BASE/auth/login -d 'username=bob&password=password123' | jq -r '.access_token')
 
 # 3. Create a note
-curl -X POST $BASE/notes \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"content":"buy milk"}'
+curl -X POST $BASE/notes -H "Authorization: Bearer $TALICE" -H "$HCTX" -d '{"content":"buy milk"}'
+curl -X POST $BASE/notes -H "Authorization: Bearer $TBOB" -H "$HCTX" -d '{"content":"buy cheeze"}'
 
 # 4. List your notes
-curl $BASE/notes -H "Authorization: Bearer $TOKEN"
+curl $BASE/notes -H "Authorization: Bearer $TALICE" |jq
+curl $BASE/notes -H "Authorization: Bearer $TBOB" |jq
 
 # 5. Get / update / delete a note (id 1)
-curl $BASE/notes/1 -H "Authorization: Bearer $TOKEN"
-curl -X PUT $BASE/notes/1 -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' -d '{"content":"buy oat milk"}'
-curl -X DELETE $BASE/notes/1 -H "Authorization: Bearer $TOKEN"
+curl $BASE/notes/1 -H "Authorization: Bearer $TALICE"
+curl -X PUT $BASE/notes/1 -H "Authorization: Bearer $TALICE" -H "$HCTX" -d '{"content":"buy oat milk"}'
+curl -X DELETE $BASE/notes/1 -H "Authorization: Bearer $TALICE"
 
 # 6. Share note 1 with bob (read-only for bob)
-curl -X POST $BASE/notes/1/share -H "Authorization: Bearer $TOKEN" \
-  -H 'Content-Type: application/json' -d '{"username":"bob"}'
+curl -X POST $BASE/notes/1/share -H "Authorization: Bearer $TALICE" -H "$HCTX" -d '{"username":"bob"}'
 ```
 
 ---
