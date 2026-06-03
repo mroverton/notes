@@ -20,4 +20,5 @@ PyJWT>=2.10
 
 # Testing
 pytest>=8.3
-httpx>=0.28
+# Starlette's TestClient uses httpx2 (httpx triggers a deprecation warning).
+httpx2>=2.0
