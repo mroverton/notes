@@ -107,6 +107,8 @@ never touch real data. The easiest path is to use the compose Postgres:
 docker compose up -d db                              # start just Postgres
 # create the test database once:
 docker compose exec db createdb -U notes notes_test
+pip install --upgrade pip
+pip install -r requirements.txt
 pytest                                               # uses TEST_DATABASE_URL from .env
 ```
 
